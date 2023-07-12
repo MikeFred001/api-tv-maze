@@ -1,6 +1,7 @@
 "use strict";
 
 const $showsList = $("#showsList");
+const $episodesList = $("#episodesList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
@@ -26,22 +27,12 @@ async function getShowsByTerm(term) {
     return {
       id: tvShow.show.id,
       name: tvShow.show.name,
-      summary: tvShow.show.summary,
+      summary: tvShow.show.summary || "",
       image: tvShow.show.image ? tvShow.show.image.original : TV_MAZE_LOGO_IMG
     };
   });
 
   return showsArr;
-}
-
-function getImportantDataForShow(tvShow) {
-  console.log(tvShow);
-  return {
-    id: tvShow.show.id,
-    name: tvShow.show.name,
-    summary: tvShow.show.summary,
-    image: tvShow.show.image ? tvShow.show.image.original : TV_MAZE_LOGO_IMG
-  };
 }
 
 /** Given list of shows, create markup for each and append to DOM.
@@ -58,12 +49,12 @@ function displayShows(shows) {
          <div class="media">
            <img
               src=${show.image}
-              alt="Bletchly Circle San Francisco"
+              alt="${show.name} Thumbnail"
               class="w-25 me-3">
            <div class="media-body">
              <h5 class="text-primary">${show.name}</h5>
              <div><small>${show.summary}</small></div>
-             <button class="btn btn-outline-light btn-sm Show-getEpisodes">
+             <button class="btn btn-outline-light btn-sm Show-getEpisodes" id=${show.id}>
                Episodes
              </button>
            </div>
@@ -74,7 +65,6 @@ function displayShows(shows) {
     $showsList.append($show);
   }
 }
-//fix alt
 
 
 /** Handle search form submission: get shows from API and display.
@@ -98,29 +88,63 @@ $searchForm.on("submit", async function handleSearchForm(evt) {
 /** Given a show ID, get from API and return (promise) array of episodes:
  *      { id, name, season, number }
  */
+async function getEpisodesOfShow(id) {
+  let response = await axios.get(`http://api.tvmaze.com/shows/${id}/episodes`);
+  let episodesData = response.data;
+  console.log("episodes consolelog", episodesData);
 
-// async function getEpisodesOfShow(id) { }
+  const episodesArr = episodesData.map(function (episode) {
+    console.log(episode);
+    return {
+      id: episode.id,
+      name: episode.name,
+      season: episode.season,
+      number: episode.number,
+      rating: episode.rating,
+      summary: episode.summary
+    };
+  });
 
-/** Write a clear docstring for this function... */
+  return episodesArr;
+}
 
-// function displayEpisodes(episodes) { }
+
+/** Appends episode list to the DOM.
+ *  Empties episode area beforehand if needed.
+ */
+function displayEpisodes(episodes) {
+  $episodesList.empty();
+
+  for (const episode of episodes) {
+    const $episode = $(`
+        <li>
+        Name: ${episode.name},
+        Season: ${episode.season},
+        Episode: ${episode.number}
+        </li>
+      `);
+
+    $episodesList.append($episode);
+  }
+}
+
+
+/** Retrieves episode information from the tvMaze API and displays it on the
+ * page.
+ */
+async function retrieveAndDisplayEpisodes(showId) {
+  const episodes = await getEpisodesOfShow(showId);
+
+  $episodesArea.show();
+  displayEpisodes(episodes);
+}
+
+
+/** Handles click event for the Show-Episodes button. */
+$showsList.on("click", ".Show-getEpisodes", async function handleEpisodesButton(evt) {
+  console.log("clicked!");
+  await retrieveAndDisplayEpisodes(evt.target.id);
+});
+
 
 // add other functions that will be useful / match our structure & design
-
-
-// {
-//   id: 1767,
-//   name: "The Bletchley Circle",
-//   summary:
-//     `<p><b>The Bletchley Circle</b> follows the journey of four ordinary
-//        women with extraordinary skills that helped to end World War II.</p>
-//      <p>Set in 1952, Susan, Millie, Lucy and Jean have returned to their
-//        normal lives, modestly setting aside the part they played in
-//        producing crucial intelligence, which helped the Allies to victory
-//        and shortened the war. When Susan discovers a hidden code behind an
-//        unsolved murder she is met by skepticism from the police. She
-//        quickly realises she can only begin to crack the murders and bring
-//        the culprit to justice with her former friends.</p>`,
-//   image:
-//       "http://static.tvmaze.com/uploads/images/medium_portrait/147/369403.jpg"
-// }
