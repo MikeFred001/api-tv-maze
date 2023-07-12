@@ -4,9 +4,9 @@ const $showsList = $("#showsList");
 const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
-const tvMazeSearchUrl = "http://api.tvmaze.com/search/shows";
-const tvMazeEpisodesUrl = "http://api.tvmaze.com/shows";
-const tvMazeLogoImg = "https://pbs.twimg.com/media/EIOH05vWoAA0yr2.jpg";
+const TV_MAZE_SEARCH_URL = "http://api.tvmaze.com/search/shows";
+const TV_MAZE_EPISODES_URL = "http://api.tvmaze.com/shows";
+const TV_MAZE_LOGO_IMG = "https://pbs.twimg.com/media/EIOH05vWoAA0yr2.jpg";
 
 
 /** Given a search term, search for tv shows that match that query.
@@ -18,36 +18,31 @@ const tvMazeLogoImg = "https://pbs.twimg.com/media/EIOH05vWoAA0yr2.jpg";
 
 async function getShowsByTerm(term) {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
-  let response = await axios.get(tvMazeSearchUrl, {params: {q: term}});
+  let response = await axios.get(TV_MAZE_SEARCH_URL, { params: { q: term } });
   let showsData = response.data;
   console.log("showsData", showsData);
 
-  // showsData.map(function(tvShow){
-  //   console.log(tvShow);
-  //   return {
-  //     id: tvShow.show.id,
-  //     name: tvShow.show.name,
-  //     summary: tvShow.show.summary,
-  //     image: tvShow.show.image ? tvShow.show.image.original : tvMazeLogoImg
-  //   }
-  // })
-  // Revisiting this refactor later
-
-  let showsArr = [];
-
-  for (let i = 0; i < showsData.length; i++) {
-    let id = showsData[i].show.id;
-    let name = showsData[i].show.name;
-    let summary = showsData[i].show.summary || "";
-    let image = showsData[i].show.image ?
-      showsData[i].show.image.original : tvMazeLogoImg;
-
-    showsArr.push({id, name, summary, image});
-  }
+  const showsArr = showsData.map(function (tvShow) {
+    return {
+      id: tvShow.show.id,
+      name: tvShow.show.name,
+      summary: tvShow.show.summary,
+      image: tvShow.show.image ? tvShow.show.image.original : TV_MAZE_LOGO_IMG
+    };
+  });
 
   return showsArr;
 }
 
+function getImportantDataForShow(tvShow) {
+  console.log(tvShow);
+  return {
+    id: tvShow.show.id,
+    name: tvShow.show.name,
+    summary: tvShow.show.summary,
+    image: tvShow.show.image ? tvShow.show.image.original : TV_MAZE_LOGO_IMG
+  };
+}
 
 /** Given list of shows, create markup for each and append to DOM.
  *
@@ -79,6 +74,7 @@ function displayShows(shows) {
     $showsList.append($show);
   }
 }
+//fix alt
 
 
 /** Handle search form submission: get shows from API and display.
@@ -93,7 +89,7 @@ async function searchShowsAndDisplay() {
   displayShows(shows);
 }
 
-$searchForm.on("submit", async function handleSearchForm (evt) {
+$searchForm.on("submit", async function handleSearchForm(evt) {
   evt.preventDefault();
   await searchShowsAndDisplay();
 });
