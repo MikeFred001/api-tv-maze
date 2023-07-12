@@ -5,7 +5,8 @@ const $episodesArea = $("#episodesArea");
 const $searchForm = $("#searchForm");
 
 const tvMazeSearchUrl = "http://api.tvmaze.com/search/shows";
-const tvMazeEpisodesUrl = "http://api.tvmaze.com/shows"
+const tvMazeEpisodesUrl = "http://api.tvmaze.com/shows";
+const tvMazeLogoImg = "https://pbs.twimg.com/media/EIOH05vWoAA0yr2.jpg";
 
 
 /** Given a search term, search for tv shows that match that query.
@@ -17,19 +18,34 @@ const tvMazeEpisodesUrl = "http://api.tvmaze.com/shows"
 
 async function getShowsByTerm(term) {
   // ADD: Remove placeholder & make request to TVMaze search shows API.
-  let showsPromise = await axios.get(tvMazeSearchUrl, {params: {q: term}});
-  console.log("showsPromise", showsPromise.data);
+  let response = await axios.get(tvMazeSearchUrl, {params: {q: term}});
+  let showsData = response.data;
+  console.log("showsData", showsData);
 
-  let id = showsPromise.data[0].show.id;
-  let name = showsPromise.data[0].show.name;
-  let summary = showsPromise.data[0].show.summary;
-  let image = showsPromise.data[0].show.image.original;
+  // showsData.map(function(tvShow){
+  //   console.log(tvShow);
+  //   return {
+  //     id: tvShow.show.id,
+  //     name: tvShow.show.name,
+  //     summary: tvShow.show.summary,
+  //     image: tvShow.show.image ? tvShow.show.image.original : tvMazeLogoImg
+  //   }
+  // })
+  // Revisiting this refactor later
 
-  console.log("Show Info:", { id, name, summary, image });
+  let showsArr = [];
 
-  return [
-    { id, name, summary, image }
-  ]
+  for (let i = 0; i < showsData.length; i++) {
+    let id = showsData[i].show.id;
+    let name = showsData[i].show.name;
+    let summary = showsData[i].show.summary || "";
+    let image = showsData[i].show.image ?
+      showsData[i].show.image.original : tvMazeLogoImg;
+
+    showsArr.push({id, name, summary, image});
+  }
+
+  return showsArr;
 }
 
 
@@ -46,7 +62,7 @@ function displayShows(shows) {
         <div data-show-id="${show.id}" class="Show col-md-12 col-lg-6 mb-4">
          <div class="media">
            <img
-              src="http://static.tvmaze.com/uploads/images/medium_portrait/160/401704.jpg"
+              src=${show.image}
               alt="Bletchly Circle San Francisco"
               class="w-25 me-3">
            <div class="media-body">
